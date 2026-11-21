@@ -1,0 +1,8 @@
+services:
+  atlas-q:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - COPILOT_MODEL=${COPILOT_MODEL:-claude-haiku-5-5}

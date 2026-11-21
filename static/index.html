@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas-Q · Centro de Operações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/static/vendor/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#070b14; --panel:#0e1524; --panel2:#121b2e; --line:#1e2a42;
+    --text:#e6ecf7; --muted:#8696b4; --accent:#5b8cff; --accent2:#9b6bff;
+    --ok:#2fd39a; --warn:#ffb547; --crit:#ff5c7a; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#16234a 0%,transparent 60%),var(--bg);
+       color:var(--text);font:14px/1.5 Inter,system-ui,sans-serif;min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--line);
+         backdrop-filter:blur(8px);position:sticky;top:0;background:rgba(7,11,20,.75);z-index:5}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+        display:grid;place-items:center;font-weight:700;box-shadow:0 0 24px #5b8cff55}
+  .brand h1{font-size:17px;margin:0;font-weight:600}
+  .brand small{color:var(--muted);display:block;font-size:12px}
+  .pill{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line);display:flex;gap:8px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+  main{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;padding:22px 28px;max-width:1500px;margin:auto}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:18px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 14px;font-weight:600}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;grid-column:1/-1}
+  .kpi .v{font-size:28px;font-weight:700;font-family:var(--mono)}
+  .kpi .l{color:var(--muted);font-size:12px}
+  #map{width:100%;height:380px}
+  .node-label{fill:var(--text);font-size:3.2px;font-weight:600}
+  .node-sub{fill:var(--muted);font-size:2.4px}
+  .photon{stroke-dasharray:1.2 3;animation:flow 1.2s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-8.4}}
+  .links{display:grid;gap:10px}
+  .link{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#0b1220}
+  .link .name{font-weight:600}
+  .link .meta{color:var(--muted);font-size:12px;font-family:var(--mono)}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em}
+  .s-ok{background:#2fd39a1f;color:var(--ok)} .s-alerta{background:#ffb5471f;color:var(--warn)} .s-abortado{background:#ff5c7a24;color:var(--crit)}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--crit)}
+  .events{max-height:260px;overflow:auto;display:grid;gap:8px;font-size:13px}
+  .ev{padding:8px 10px;border-left:3px solid var(--accent);background:#0b1220;border-radius:6px}
+  .ev.critico{border-color:var(--crit)} .ev.alerta{border-color:var(--warn)}
+  .ev time{color:var(--muted);font-family:var(--mono);font-size:11px;margin-right:6px}
+  form{display:grid;gap:10px}
+  select,textarea,input[type=text]{width:100%;background:#0b1220;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+  textarea{resize:vertical;min-height:70px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.5;cursor:wait}
+  .msg{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0b1220;margin-top:10px;font-size:12px}
+  .cipher{font-family:var(--mono);color:var(--accent2);word-break:break-all;opacity:.85}
+  .chat{display:flex;flex-direction:column;gap:10px;max-height:320px;overflow:auto;margin-bottom:10px}
+  .bubble{padding:10px 12px;border-radius:12px;max-width:92%;white-space:pre-wrap}
+  .me{align-self:flex-end;background:#1d2b4f}
+  .ai{align-self:flex-start;background:#0b1220;border:1px solid var(--line)}
+  .tools{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px}
+  .full{grid-column:1/-1}
+  .stack{display:grid;gap:18px;align-content:start}
+  @media (max-width:1000px){main{grid-template-columns:1fr;padding:16px}.kpis{grid-template-columns:repeat(2,1fr)}header{padding:14px 16px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">Q</div>
+    <div><h1>Atlas-Q · Centro de Operações</h1><small>Rede quanticamente segura para segurança pública · BA</small></div>
+  </div>
+  <div class="pill" id="netpill"><span class="dot" id="netdot"></span><span id="nettext">Rede operando</span></div>
+</header>
+
+<main>
+  <section class="kpis">
+    <div class="card kpi"><div class="v" id="k-keys">–</div><div class="l">chaves de 256 bits em estoque</div></div>
+    <div class="card kpi"><div class="v" id="k-qber">–</div><div class="l">QBER médio (limite 11%)</div></div>
+    <div class="card kpi"><div class="v" id="k-links">–</div><div class="l">enlaces gerando chaves</div></div>
+    <div class="card kpi"><div class="v" id="k-msgs">0</div><div class="l">ocorrências cifradas enviadas</div></div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Topologia da rede QKD</h2>
+      <svg id="map" viewBox="0 0 100 86" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="card">
+      <h2>QBER por enlace (tempo real)</h2>
+      <canvas id="chart" height="150"></canvas>
+    </div>
+    <div class="card">
+      <h2>Copiloto de operações (LLM)</h2>
+      <div class="chat" id="chat">
+        <div class="bubble ai">Olá! Sou o copiloto da rede. Pergunte, por exemplo: “Algum enlace sob ataque?” ou “Simule um espião no enlace salvador-feira e me explique o que acontece.”</div>
+      </div>
+      <form id="askform"><div class="row" style="grid-template-columns:1fr auto">
+        <input type="text" id="question" placeholder="Pergunte ao copiloto…" required>
+        <button id="askbtn">Perguntar</button></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Enlaces</h2>
+      <div class="links" id="links"></div>
+    </div>
+    <div class="card">
+      <h2>Enviar ocorrência cifrada</h2>
+      <form id="occform">
+        <div class="row"><select id="from"></select><select id="to"></select></div>
+        <textarea id="text" required>Ocorrência 2026-1187: roubo de veículo, placa ABC1D23, sentido BR-324.</textarea>
+        <button id="sendbtn">Cifrar com chave quântica e enviar</button>
+      </form>
+      <div id="msgs"></div>
+    </div>
+    <div class="card">
+      <h2>Eventos</h2>
+      <div class="events" id="events"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const COLORS = {ok:'#2fd39a', alerta:'#ffb547', abortado:'#ff5c7a'};
+const LINE_COLORS = ['#5b8cff','#9b6bff','#2fd39a','#ffb547','#ff5c7a'];
+let state = null, chart = null, history = [];
+const $ = id => document.getElementById(id);
+const fmtTime = t => new Date(t*1000).toLocaleTimeString('pt-BR');
+const city = id => state.nodes.find(n=>n.id===id).city;
+
+function drawMap(){
+  const svg = $('map'); const N = Object.fromEntries(state.nodes.map(n=>[n.id,n]));
+  let html = '<defs><radialGradient id="g"><stop offset="0" stop-color="#5b8cff" stop-opacity=".55"/><stop offset="1" stop-color="#5b8cff" stop-opacity="0"/></radialGradient></defs>';
+  for (const l of state.links){
+    const a=N[l.a], b=N[l.b], c=COLORS[l.status];
+    html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${c}" stroke-opacity=".25" stroke-width="1.6"/>`;
+    if (l.status!=='abortado') html += `<line class="photon" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${c}" stroke-width=".7"/>`;
+    if (l.eve){ const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+      html += `<circle cx="${mx}" cy="${my}" r="2.4" fill="#ff5c7a"/><text x="${mx}" y="${my+0.9}" text-anchor="middle" font-size="2.4" font-weight="700" fill="#fff">E</text>`; }
+  }
+  for (const n of state.nodes){
+    html += `<circle cx="${n.x}" cy="${n.y}" r="7" fill="url(#g)"/><circle cx="${n.x}" cy="${n.y}" r="2.2" fill="#0e1524" stroke="#5b8cff" stroke-width=".7"/>
+             <text class="node-label" x="${n.x}" y="${n.y+6}" text-anchor="middle">${n.city}</text>
+             <text class="node-sub" x="${n.x}" y="${n.y+9}" text-anchor="middle">${n.name}</text>`;
+  }
+  svg.innerHTML = html;
+}
+
+function drawLinks(){
+  $('links').innerHTML = state.links.map(l=>`
+    <div class="link">
+      <div><div class="name">${city(l.a)} ↔ ${city(l.b)}</div>
+        <div class="meta">${l.km} km · QBER ${l.qber!=null?(l.qber*100).toFixed(1)+'%':'–'} · ${l.stored_keys} chaves</div></div>
+      <span class="badge s-${l.status}">${l.status}</span>
+      <label class="toggle"><input type="checkbox" ${l.eve?'checked':''} onchange="toggleEve('${l.id}',this.checked)"> simular espião (Eve)</label>
+      <span class="meta">${l.consumed_total}/${l.generated_total} usadas</span>
+    </div>`).join('');
+}
+
+function drawChart(){
+  const labels = state.links[0].qber_history.map(h=>fmtTime(h.t));
+  const datasets = state.links.map((l,i)=>({label:`${city(l.a)}–${city(l.b)}`,data:l.qber_history.map(h=>h.qber*100),
+      borderColor:LINE_COLORS[i],backgroundColor:LINE_COLORS[i],tension:.35,pointRadius:0,borderWidth:2}));
+  datasets.push({label:'Limite 11%',data:labels.map(()=>11),borderColor:'#ff5c7a',borderDash:[6,6],pointRadius:0,borderWidth:1.5});
+  if (!chart){
+    chart = new Chart($('chart'),{type:'line',data:{labels,datasets},options:{animation:false,responsive:true,
+      scales:{x:{ticks:{color:'#8696b4',maxTicksLimit:6},grid:{color:'#1e2a42'}},y:{min:0,suggestedMax:30,ticks:{color:'#8696b4',callback:v=>v+'%'},grid:{color:'#1e2a42'}}},
+      plugins:{legend:{labels:{color:'#e6ecf7',boxWidth:10,font:{size:11}}}}}});
+  } else { chart.data.labels = labels; chart.data.datasets = datasets; chart.update(); }
+}
+
+function drawKpis(){
+  const keys = state.links.reduce((s,l)=>s+l.stored_keys,0);
+  const q = state.links.filter(l=>l.qber!=null); const avg = q.reduce((s,l)=>s+l.qber,0)/(q.length||1);
+  const up = state.links.filter(l=>l.status!=='abortado').length;
+  $('k-keys').textContent = keys; $('k-qber').textContent = (avg*100).toFixed(1)+'%';
+  $('k-links').textContent = `${up}/${state.links.length}`; $('k-msgs').textContent = state.messages.length;
+  const bad = state.links.some(l=>l.status==='abortado');
+  $('netdot').style.background = bad?'var(--crit)':'var(--ok)'; $('netdot').style.boxShadow = `0 0 10px ${bad?'var(--crit)':'var(--ok)'}`;
+  $('nettext').textContent = bad?'Incidente em andamento':'Rede operando';
+}
+
+function drawEvents(){
+  $('events').innerHTML = state.events.map(e=>`<div class="ev ${e.level}"><time>${fmtTime(e.t)}</time>${e.text}</div>`).join('');
+  $('msgs').innerHTML = state.messages.slice(0,3).map(m=>`<div class="msg">
+     <b>${city(m.from)} → ${city(m.to)}</b> · chave <span class="cipher">${m.key_ID.slice(0,8)}…</span><br>
+     <span class="cipher">${m.ciphertext.slice(0,90)}…</span><br>✅ Decifrado no destino: ${m.plaintext}</div>`).join('');
+}
+
+function fillSelects(){
+  if ($('from').options.length) return;
+  for (const n of state.nodes){ $('from').add(new Option(n.city,n.id)); $('to').add(new Option(n.city,n.id)); }
+  $('from').value='feira'; $('to').value='salvador';
+}
+
+async function refresh(){
+  state = await (await fetch('/api/state')).json();
+  fillSelects(); drawMap(); drawLinks(); drawKpis(); drawEvents();
+  try { drawChart(); } catch(err) { console.warn('Gráfico indisponível', err); }
+}
+
+async function toggleEve(id, enabled){
+  await fetch(`/api/links/${id}/eve`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled})}); refresh();
+}
+
+$('occform').onsubmit = async e => {
+  e.preventDefault(); $('sendbtn').disabled = true;
+  const r = await fetch('/api/occurrences',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({sender:$('from').value,receiver:$('to').value,text:$('text').value})});
+  if (!r.ok) alertMsg((await r.json()).detail); $('sendbtn').disabled = false; refresh();
+};
+function alertMsg(t){ $('msgs').insertAdjacentHTML('afterbegin',`<div class="msg" style="border-color:var(--crit)">⚠️ ${t}</div>`); }
+
+function bubble(cls, text, tools){
+  $('chat').insertAdjacentHTML('beforeend',`<div class="bubble ${cls}">${text.replace(/</g,'&lt;')}${tools&&tools.length?`<div class="tools">${tools[0].startsWith('modo')?tools[0]:'ferramentas: '+tools.join(', ')}</div>`:''}</div>`);
+  $('chat').scrollTop = $('chat').scrollHeight;
+}
+$('askform').onsubmit = async e => {
+  e.preventDefault(); const q = $('question').value.trim(); if(!q) return;
+  bubble('me', q); $('question').value=''; $('askbtn').disabled = true;
+  try{
+    const r = await (await fetch('/api/copilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})})).json();
+    bubble('ai', r.answer, r.mode==='offline' ? ['modo offline (sem ANTHROPIC_API_KEY)'] : r.tools_used);
+    history.push({role:'user',content:q},{role:'assistant',content:r.answer});
+  }catch(err){ bubble('ai','Erro ao falar com o copiloto.'); }
+  $('askbtn').disabled = false; refresh();
+};
+
+refresh(); setInterval(refresh, 1500);
+</script>
+</body>
+</html>
