@@ -1,5 +1,12 @@
 # Atlas-Q · Rede quanticamente segura com copiloto de IA
 
+[![CI](https://github.com/rogeriocerqueira/Atlas-Q/actions/workflows/ci.yml/badge.svg)](https://github.com/rogeriocerqueira/Atlas-Q/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+🔗 **[Ver demo ao vivo](https://atlas-q-ak9o.onrender.com)** · hospedado no plano gratuito do Render: o primeiro acesso pode levar até 50 segundos para "acordar".
+
 > Simulação de uma rede de **Distribuição Quântica de Chaves (QKD)** que protege a troca de ocorrências entre unidades de segurança pública na Bahia, com **KMS no padrão ETSI GS QKD 014** e um **copiloto de operações com LLM** que monitora a rede e explica incidentes em linguagem natural.
 
 ![Ataque detectado em tempo real](docs/demo-ataque.gif)
@@ -124,6 +131,8 @@ Sem `ANTHROPIC_API_KEY`, o copiloto funciona em **modo offline**, com regras sim
 
 > O GIF mostra o copiloto em modo offline (regras). Com `ANTHROPIC_API_KEY` configurada, as respostas vêm do Claude.
 
+**Sobre a demo ao vivo:** ela roda com o copiloto em modo offline, para não expor uma chave de API paga. O estado da rede é compartilhado entre todos os visitantes: se alguém ligar o espião, todo mundo que estiver com o painel aberto vê o incidente. A documentação interativa da API fica em [/docs](https://atlas-q-ak9o.onrender.com/docs).
+
 ## API ETSI GS QKD 014
 
 A chave nunca viaja junto com a mensagem: só o `key_ID`. Cada lado busca a chave no próprio KMS.
@@ -198,8 +207,12 @@ python -m scripts.experimento_qber
 ## Testes
 
 ```bash
-pytest -q
+pytest -q          # testes
+ruff check .       # lint
+ruff format .      # formatação
 ```
+
+Testes e lint rodam automaticamente no GitHub Actions a cada push, e cada push na `main` atualiza a demo no Render.
 
 Os testes cobrem: geração de chave sem espião, aborto com espião, enc_keys e dec_keys devolvendo a mesma chave, chave de uso único, envio de ocorrência cifrada e detecção de incidente pelo copiloto.
 
@@ -221,4 +234,4 @@ Este é um projeto de estudo. A camada física é simulada e algumas partes est�
 
 ## Autor
 
-**Rogério dos Santos Cerqueira** · Engenharia de Computação (UEFS) · [Lattes](https://lattes.cnpq.br/0254977009739288) · [LinkedIn] · [GitHub]
+**Rogério dos Santos Cerqueira** · Engenharia de Computação (UEFS) · [Lattes](https://lattes.cnpq.br/0254977009739288) · [LinkedIn](https://www.linkedin.com/rogeriocerqueirauefs) · [GitHub](https://github.com/rogeriocerqueira)
